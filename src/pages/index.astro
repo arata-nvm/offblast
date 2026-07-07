@@ -1,0 +1,37 @@
+---
+import Base from "../layouts/Base.astro";
+import { lawIndex, BASE, href } from "../lib/data.ts";
+
+const ids = lawIndex.map((l) => l.id);
+const fallback = ids[0] ?? null;
+---
+
+<Base>
+    <main>
+        <p class="loading">五七五を探しています…</p>
+        <noscript>
+            {
+                fallback ? (
+                    <a href={href(`law/${fallback}`)}>はじめる</a>
+                ) : (
+                    <span>データがありません</span>
+                )
+            }
+        </noscript>
+    </main>
+
+    <script define:vars={{ ids, base: BASE }}>
+        if (ids.length > 0) {
+            const id = ids[Math.floor(Math.random() * ids.length)];
+            location.replace(`${base}law/${id}`);
+        }
+    </script>
+
+    <style>
+        .loading {
+            text-align: center;
+            margin-top: 30vh;
+            color: #8a8272;
+        }
+    </style>
+</Base>

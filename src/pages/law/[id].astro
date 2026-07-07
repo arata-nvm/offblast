@@ -1,0 +1,170 @@
+---
+import Base from "../../layouts/Base.astro";
+import HaikuCard from "../../components/HaikuCard.astro";
+import { laws, lawIndex, getLaw, BASE } from "../../lib/data.ts";
+
+export function getStaticPaths() {
+    return laws.map((law) => ({ params: { id: law.id } }));
+}
+
+const { id } = Astro.params;
+const law = getLaw(id!)!;
+const siteUrl = Astro.site
+    ? new URL(Astro.url.pathname, Astro.site).href
+    : Astro.url.href;
+const ids = lawIndex.map((l) => l.id);
+const base = BASE;
+---
+
+<Base title={`${law.name} — OffBlast`}>
+    <main class="maki" id="maki">
+        <section class="title">
+            <a class="lawname" href={law.url} target="_blank" rel="noopener"
+                >{law.name}</a
+            >
+            <span class="count"
+                >俳句が<span class="num">{law.haikus.length}</span
+                >個見つかりました</span
+            >
+        </section>
+
+        {
+            law.haikus.map((h, i) =>
+                i === 0 && law.haikus.length > 1 ? (
+                    <div class="firstcard">
+                        <HaikuCard
+                            haiku={h}
+                            lawName={law.name}
+                            siteUrl={siteUrl}
+                        />
+                        <div class="hint" aria-hidden="true">
+                            <svg viewBox="0 0 48 24" width="42" height="21">
+                                <path
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M45 12H5m0 0 11-8"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                ) : (
+                    <HaikuCard haiku={h} lawName={law.name} siteUrl={siteUrl} />
+                ),
+            )
+        }
+
+        <p class="src">出典： e-Gov 法令API</p>
+    </main>
+
+    <button class="reload" id="next" type="button" aria-label="次の法令へ">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"
+            ><path
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20 11a8 8 0 1 0-1.6 4.8M20 5v5h-5"></path></svg
+        >
+    </button>
+
+    <script define:vars={{ ids, current: id, base }}>
+        // 縦書きは右→左に読むため、初期スクロール位置を右端に合わせる。
+        const maki = document.getElementById("maki");
+        if (maki) maki.scrollLeft = maki.scrollWidth;
+
+        document.getElementById("next")?.addEventListener("click", () => {
+            const pool = ids.filter((x) => x !== current);
+            const src = pool.length ? pool : ids;
+            location.href = `${base}law/${src[Math.floor(Math.random() * src.length)]}`;
+        });
+    </script>
+
+    <style>
+        .maki {
+            width: 100vw;
+            max-width: none;
+            height: 100dvh;
+            margin: 0;
+            padding: 2dvh clamp(12px, 4vw, 48px);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+            gap: clamp(14px, 2vw, 26px);
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        .maki > * {
+            flex-shrink: 0;
+        }
+
+        .title {
+            writing-mode: vertical-rl;
+            height: 100%;
+            padding: 2px 0;
+        }
+        .lawname {
+            font-family: "Noto Serif JP", serif;
+            font-size: clamp(1.3rem, 3dvh, 1.8rem);
+            font-weight: 500;
+            color: var(--ink);
+            margin: 0 clamp(6px, 1.4vw, 12px) 0 0;
+        }
+        .count {
+            color: #6b6559;
+            font-size: 1.05rem;
+            margin-top: 1em;
+        }
+        .num {
+            text-combine-upright: all;
+            margin: 0 2px;
+        }
+
+        .src {
+            writing-mode: vertical-rl;
+            height: 100%;
+            margin: 0;
+            color: #8a8272;
+            font-size: 0.85rem;
+        }
+
+        .firstcard {
+            position: relative;
+        }
+        .hint {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            color: var(--frame);
+        }
+        .hint svg {
+            display: block;
+        }
+
+        .reload {
+            position: fixed;
+            left: 20px;
+            bottom: 18px;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            color: var(--accent);
+            background: var(--bg);
+            border: 1px solid var(--frame);
+            cursor: pointer;
+        }
+        .reload:hover {
+            background: #f0ece3;
+        }
+    </style>
+</Base>

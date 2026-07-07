@@ -1,0 +1,59 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Download & extract e-Gov XML
+        run: |
+          curl -fL --retry 3 -o egov.zip \
+            "https://laws.e-gov.go.jp/bulkdownload?file_section=1&only_xml_flag=true"
+          mkdir -p egov-xml && unzip -q egov.zip -d egov-xml
+
+      - name: Detect haiku
+        env:
+          BULK_DIR: egov-xml
+        run: |
+          npm run build:data
+          test -s src/data/index.json  # 空なら失敗させて空サイトの公開を防ぐ
+
+      - run: npm run build
+
+      # .nojekyll は Astro の _astro/ 等を Pages の Jekyll に無視させないために必要
+      - name: Publish dist to gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          touch dist/.nojekyll
+          cd dist
+          git init -qb gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q "$REMOTE" gh-pages 2>/dev/null; then
+            git reset -q --soft FETCH_HEAD
+          fi
+          git add -A
+          git commit -qm "deploy $(date -u +%F)" || true
+          git push -q "$REMOTE" HEAD:gh-pages
