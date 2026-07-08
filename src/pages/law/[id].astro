@@ -22,10 +22,6 @@ const base = BASE;
             <a class="lawname" href={law.url} target="_blank" rel="noopener"
                 >{law.name}</a
             >
-            <p class="count">
-                俳句が<span class="num">{law.haikus.length}</span
-                >個見つかりました
-            </p>
         </section>
 
         {
@@ -113,14 +109,6 @@ const base = BASE;
             font-weight: 500;
             color: var(--ink);
             margin: 0 clamp(6px, 1.4vw, 12px) 0 0;
-        }
-        .count {
-            color: #6b6559;
-            font-size: 1.05rem;
-        }
-        .num {
-            text-combine-upright: all;
-            margin: 0 2px;
         }
 
         .src {
