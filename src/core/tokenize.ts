@@ -34,6 +34,7 @@ export async function tokenize(text: string): Promise<Token[]> {
     pos: w.pos,
     posDetail1: w.pos_detail_1,
     basicForm: w.basic_form,
+    conjugatedForm: w.conjugated_form,
     pron: w.pronunciation,
     isUnknown: w.word_type === "UNKNOWN",
   }));

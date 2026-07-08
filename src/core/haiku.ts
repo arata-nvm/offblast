@@ -3,6 +3,7 @@ export interface Token {
   pos: string;
   posDetail1: string;
   basicForm: string;
+  conjugatedForm: string;
   pron: string;
   isUnknown: boolean;
 }
@@ -45,7 +46,21 @@ function canBeLastWord(t: Token): boolean {
     );
   const notDa = !(t.pos === "助動詞" && t.basicForm === "だ");
   const notNumber = !(t.pos === "名詞" && t.posDetail1 === "数");
-  return notRentaishi && notConnective && notDa && notNumber;
+  // 助詞で終わると句が途切れる。また未然/連用/仮定形は活用語の途中で切れている
+  // （さ・し・なかっ・なけれ 等）ので、下五にはできない。
+  const notParticle = t.pos !== "助詞";
+  const notStem = !(
+    (t.pos === "動詞" || t.pos === "助動詞") &&
+    /^(未然|連用|仮定|体言接続|ガル接続)/.test(t.conjugatedForm)
+  );
+  return (
+    notRentaishi &&
+    notConnective &&
+    notDa &&
+    notNumber &&
+    notParticle &&
+    notStem
+  );
 }
 
 const PART_LENGTHS = [5, 7, 5] as const;
@@ -68,6 +83,7 @@ export function findHaikus(tokens: Token[]): string[] {
 
       if (sum > PART_LENGTHS[partIndex]) break;
       if (sum === PART_LENGTHS[partIndex]) {
+        if (t.pos === "接頭詞") break; // 接頭詞で句を終えると次語と分断される（例: 追|完）
         partIndex++;
         if (partIndex === PART_LENGTHS.length) {
           if (!canBeLastWord(t)) break;
