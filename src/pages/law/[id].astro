@@ -22,10 +22,10 @@ const base = BASE;
             <a class="lawname" href={law.url} target="_blank" rel="noopener"
                 >{law.name}</a
             >
-            <span class="count"
-                >俳句が<span class="num">{law.haikus.length}</span
-                >個見つかりました</span
-            >
+            <p class="count">
+                俳句が<span class="num">{law.haikus.length}</span
+                >個見つかりました
+            </p>
         </section>
 
         {
@@ -117,7 +117,6 @@ const base = BASE;
         .count {
             color: #6b6559;
             font-size: 1.05rem;
-            margin-top: 1em;
         }
         .num {
             text-combine-upright: all;
