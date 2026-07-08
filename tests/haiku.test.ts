@@ -90,7 +90,7 @@ describe("clean と XML パイプライン", () => {
     ).toBe("学問の自由はこれを保障する。");
   });
 
-  it("法令XMLの Sentence から575を検出できる", async () => {
+  it("法令XMLの Sentence から俳句を検出できる", async () => {
     const xml =
       "<Law><LawBody><LawTitle>日本国憲法</LawTitle><MainProvision><Article><Paragraph><ParagraphSentence>" +
       "<Sentence>学問の自由は、これを保障する。</Sentence>" +
