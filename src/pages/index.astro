@@ -1,14 +1,14 @@
 ---
 import Base from "../layouts/Base.astro";
-import { laws } from "../lib/data.ts";
+import { laws, href } from "../lib/data.ts";
 
-const items = laws.flatMap((law) =>
-    law.haikus.map((haiku) => ({
-        haiku: haiku.split(" ").join("　"),
-        law: law.name,
-        url: law.url,
-    })),
-);
+// 全俳句をHTMLに埋め込むと肥大化するため、データは haikus.json に分離する
+const dataHref = href("haikus.json");
+const samples = laws
+    .flatMap((law) =>
+        law.haikus.map((haiku) => ({ haiku, law: law.name, url: law.url })),
+    )
+    .slice(0, 8);
 const siteUrl = Astro.site
     ? new URL(Astro.url.pathname, Astro.site).href
     : Astro.url.href;
@@ -19,7 +19,7 @@ const siteUrl = Astro.site
         <noscript>
             <ul class="static">
                 {
-                    items.map((it) => (
+                    samples.map((it) => (
                         <li>
                             {it.haiku} —{" "}
                             <a href={it.url} target="_blank" rel="noopener">
@@ -34,9 +34,10 @@ const siteUrl = Astro.site
 
     <p class="src">出典： e-Gov 法令API</p>
 
-    <script define:vars={{ items, siteUrl }}>
+    <script define:vars={{ dataHref, siteUrl }}>
         const stage = document.getElementById("stage");
         const rand = (min, max) => min + Math.random() * (max - min);
+        let items = [];
 
         const active = new Set();
         const rects = new Map();
@@ -190,8 +191,20 @@ const siteUrl = Astro.site
             }
         }
 
-        // フォント読込前の採寸ずれを避けるため、読込後に開始する
-        (document.fonts?.ready ?? Promise.resolve()).then(build);
+        fetch(dataHref)
+            .then((res) => res.json())
+            .then((laws) => {
+                items = laws.flatMap(([id, name, haikus]) =>
+                    haikus.map((haiku) => ({
+                        haiku: haiku.split(" ").join("　"),
+                        law: name,
+                        url: `https://laws.e-gov.go.jp/law/${id}`,
+                    })),
+                );
+                // フォント読込前の採寸ずれを避けるため、読込後に開始する
+                return document.fonts?.ready ?? Promise.resolve();
+            })
+            .then(build);
         let timer;
         addEventListener("resize", () => {
             clearTimeout(timer);
